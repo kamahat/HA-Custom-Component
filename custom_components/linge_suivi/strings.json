@@ -1,0 +1,18 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Linge - Suivi cycles",
+        "description": "Cree un capteur de duree de cycle a partir d un binary_sensor \"en marche\" existant.",
+        "data": {
+          "source": "Binary sensor \"en marche\"",
+          "name": "Nom",
+          "device_id": "Appareil (device) a rattacher"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Ce binary_sensor est deja suivi."
+    }
+  }
+}
