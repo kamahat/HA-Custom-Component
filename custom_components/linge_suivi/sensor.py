@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -9,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON, STATE_OFF, UnitOfTime
+from homeassistant.const import STATE_ON, STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN, UnitOfTime
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -23,6 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 
 STORAGE_VERSION = 1
 MAX_HISTORY = 200
+MAX_RESUME_AGE = timedelta(hours=6)
 
 
 def slugify_source(source: str) -> str:
@@ -107,6 +109,8 @@ class LingeCycleSensor(SensorEntity):
             return
 
         if new_state.state == STATE_ON and (old_state is None or old_state.state != STATE_ON):
+            if self._is_resume_after_restart(old_state):
+                return
             self._current_start = dt_util.utcnow().isoformat()
             self.hass.async_create_task(self._save())
             return
@@ -127,6 +131,15 @@ class LingeCycleSensor(SensorEntity):
             self._attr_native_value = record["duree_min"]
             self.hass.async_create_task(self._save())
             self.async_write_ha_state()
+
+    def _is_resume_after_restart(self, old_state) -> bool:
+        # unavailable/unknown -> on au demarrage de HA : le cycle continue, on garde son depart stocke.
+        if self._current_start is None:
+            return False
+        if old_state is not None and old_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return False
+        start = dt_util.parse_datetime(self._current_start)
+        return start is not None and dt_util.utcnow() - start < MAX_RESUME_AGE
 
     async def _save(self) -> None:
         await self._store.async_save(
