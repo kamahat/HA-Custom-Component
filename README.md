@@ -1,3 +1,5 @@
+> **Développement sur le GitLab interne.** Ce dépôt GitHub est un **miroir** mis à jour automatiquement depuis le GitLab privé de l'auteur ; les modifications, issues et demandes de fusion se font là-bas. Les push directs ici sont bloqués ou écrasés.
+
 # HA-Custom-Component
 
 Intégrations Home Assistant personnalisées (usage privé, non HACS-officiel).
